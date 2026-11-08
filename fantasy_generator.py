@@ -12,7 +12,12 @@ import random
 import tkinter as tk
 from tkinter import font, ttk
 
-# Dizionario delle sillabe/radici per categoria per garantire oltre 100 nomi coerenti ciascuna
+# ==============================================================================
+# STRUTTURA DATI LINGUISTICA
+# ==============================================================================
+# Dizionario principale contenente le matrici di sillabe per ciascuna categoria.
+# Per aggiungere una nuova categoria o modificare i suoni dei nomi, è sufficiente
+# espandere o modificare le liste di "prefissi", "centrali" e "suffissi".
 NAME_DATA = {
     "Guerriero": {
         "prefissi": ["Val", "Thor", "Gar", "Grim", "Karn", "Brog", "Drak", "Ron", "Krag", "Vond", "Hroth", "Bork"],
@@ -52,38 +57,60 @@ NAME_DATA = {
     "Barbaro": {
         "prefissi": ["Krom", "Hroth", "Ul", "Grok", "Tor", "Skol", "Varg", "Bol", "Rug", "Thorg", "Zul", "Karr"],
         "centrali": ["og", "ak", "un", "ok", "ath", "ig", "ar", "or", "ul", "ash"],
-        "suffissi": ["ar", "ok", "un", "ax", "or", "ath", "zak", "rok", "skull", "bane", "fury", "mAW"]
+        "suffissi": ["ar", "ok", "un", "ax", "or", "ath", "zak", "rok", "skull", "bane", "fury", "maw"]
     }
 }
 
+# ==============================================================================
+# MOTORE DI GENERAZIONE PROCEDURALE
+# ==============================================================================
 def generate_fantasy_name(category):
-    """Genera un nome fantasy coerente combinando prefissi, parti centrali e suffissi."""
+    """
+    Genera un nome fantasy casuale e coerente per la categoria specificata.
+    
+    Logica:
+    1. Estrae le liste di sillabe associate alla categoria scelta.
+    2. Seleziona casualmente un prefisso e un suffisso.
+    3. Con una certa probabilità (70%), inserisce una parte centrale per variare la lunghezza.
+    4. Concatena le parti e capitalizza la prima lettera.
+    """
+    # Fallback di sicurezza su "Guerriero" se la categoria non viene trovata
     data = NAME_DATA.get(category, NAME_DATA["Guerriero"])
-    # Creiamo un'ampia varietà di combinazioni (molto oltre 100)
+    
     prefix = random.choice(data["prefissi"])
+    # Inserisce la parte centrale solo se il numero casuale è > 0.3 (probabilità del 70%)
     middle = random.choice(data["centrali"]) if random.random() > 0.3 else ""
     suffix = random.choice(data["suffissi"])
     
-    # Se il nome è troppo corto o per aggiungere variabilità stilistica
+    # Assemblaggio finale della stringa del nome
     name = f"{prefix}{middle}{suffix}".capitalize()
     return name
 
+# ==============================================================================
+# INTERFACCIA GRAFICA (GUI)
+# ==============================================================================
 class FantasyNameApp:
     def __init__(self, root):
+        """Inizializza la finestra principale e configura lo stile dell'applicazione."""
         self.root = root
         self.root.title("Fantasy Name Generator")
         self.root.geometry("650x550")
         self.root.minsize(600, 500)
-        self.root.configure(bg="#1e1e2e")
+        self.root.configure(bg="#1e1e2e") # Sfondo scuro elegante
 
-        # Stile dell'interfaccia
+        # Configurazione del tema grafico Tkinter
         self.style = ttk.Style()
         self.style.theme_use("clam")
         
+        # Avvia la creazione dei componenti dell'interfaccia
         self.setup_ui()
 
     def setup_ui(self):
-        # Header principale al centro
+        """Costruisce e posiziona tutti gli elementi visivi della finestra."""
+        
+        # ----------------------------------------------------------------------
+        # 1. HEADER (Intestazione centrale con Nome e Autore)
+        # ----------------------------------------------------------------------
         header_frame = tk.Frame(self.root, bg="#1e1e2e")
         header_frame.pack(fill=tk.X, pady=25)
 
@@ -97,20 +124,23 @@ class FantasyNameApp:
         author_label = tk.Label(header_frame, text=author_text, font=author_font, fg="#a6adc8", bg="#1e1e2e")
         author_label.pack(pady=(5, 0))
 
-        # Separatore visivo
+        # Linea divisoria estetica
         sep = ttk.Separator(self.root, orient="horizontal")
         sep.pack(fill=tk.X, padx=40, pady=10)
 
-        # Sezione pulsanti categorie (Griglia centrale)
+        # ----------------------------------------------------------------------
+        # 2. GRIGLIA DEI PULSANTI (Categorie)
+        # ----------------------------------------------------------------------
         btn_frame = tk.Frame(self.root, bg="#1e1e2e")
         btn_frame.pack(pady=15)
 
         categories = list(NAME_DATA.keys())
         
-        # Creazione dei pulsanti in una griglia 4x2
+        # Disposizione dinamica dei pulsanti in una griglia 4 colonne x 2 righe
         row_idx = 0
         col_idx = 0
         for cat in categories:
+            # Creazione del pulsante per ogni categoria presente in NAME_DATA
             btn = tk.Button(
                 btn_frame, 
                 text=cat, 
@@ -123,25 +153,31 @@ class FantasyNameApp:
                 width=14,
                 height=2,
                 cursor="hand2",
+                # Passa la categoria corrente alla funzione di callback tramite lambda
                 command=lambda c=cat: self.on_category_click(c)
             )
             btn.grid(row=row_idx, column=col_idx, padx=10, pady=10)
             
+            # Gestione della griglia: passa alla colonna successiva, o va a capo dopo 4 colonne
             col_idx += 1
             if col_idx > 3:
                 col_idx = 0
                 row_idx += 1
 
-        # Area di output al centro in basso
+        # ----------------------------------------------------------------------
+        # 3. AREA DI OUTPUT (Display del nome generato in basso al centro)
+        # ----------------------------------------------------------------------
         output_frame = tk.Frame(self.root, bg="#1e1e2e")
         output_frame.pack(fill=tk.BOTH, expand=True, padx=40, pady=20)
 
+        # Variabile di controllo associata alla label del nome generato
         self.result_var = tk.StringVar()
         self.result_var.set("Seleziona una categoria sopra per generare un nome")
 
         result_label_title = tk.Label(output_frame, text="Nome Generato:", font=("Helvetica", 10, "bold"), fg="#89b4fa", bg="#1e1e2e")
         result_label_title.pack(pady=(0, 5))
 
+        # Display visivo centrale con stile a riquadro
         self.result_display = tk.Label(
             output_frame, 
             textvariable=self.result_var, 
@@ -156,11 +192,19 @@ class FantasyNameApp:
         self.result_display.pack(fill=tk.X, expand=False)
 
     def on_category_click(self, category):
-        """Gestisce il click del pulsante generando e mostrando il nome."""
+        """
+        Funzione di callback eseguita alla pressione di un pulsante categoria.
+        Genera il nome tramite la funzione dedicata e aggiorna la UI.
+        """
         name = generate_fantasy_name(category)
+        # Aggiorna il testo visualizzato nel riquadro in basso
         self.result_var.set(f"[{category}]  {name}")
 
+# ==============================================================================
+# PUNTO DI INGRESSO (Main)
+# ==============================================================================
 if __name__ == "__main__":
+    # Avvio dell'applicazione principale Tkinter
     root = tk.Tk()
     app = FantasyNameApp(root)
     root.mainloop()
